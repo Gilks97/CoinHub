@@ -161,7 +161,7 @@ This will:
 
 | URL                          | What                        |
 |------------------------------|-----------------------------|
-| http://localhost/            | CoinHub frontend            |
+| http://127.0.0.1:8080/       | CoinHub frontend       |
 | http://localhost/admin/      | Jazzmin admin panel         |
 | http://localhost/api/coins/  | Coins API (JSON)            |
 
