@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoinHub — Select App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">◈</span>
+        <span class="logo-text">CoinHub</span>
+      </a>
+      <p class="header-tagline">Instant coin recharge · Powered by M-Pesa</p>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <section class="hero">
+      <h1 class="hero-title">Choose your<br><em>app to recharge</em></h1>
+      <p class="hero-sub">Select the coin below, enter your details, and pay securely via M-Pesa.</p>
+    </section>
+
+    <div id="loadingState" class="loading-state">
+      <div class="spinner"></div>
+      <span>Loading apps…</span>
+    </div>
+
+    <div id="errorState" class="error-state hidden">
+      <p>⚠ Could not load apps. <a href="#" onclick="loadApps()">Retry</a></p>
+    </div>
+
+    <div class="app-grid" id="appGrid"></div>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2025 CoinHub · Secured payments via Safaricom M-Pesa</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

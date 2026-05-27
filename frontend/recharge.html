@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoinHub — Recharge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">◈</span>
+        <span class="logo-text">CoinHub</span>
+      </a>
+      <a href="index.html" class="back-link">← All Apps</a>
+    </div>
+  </header>
+
+  <main class="main-content recharge-main">
+
+    <!-- App identity strip -->
+    <div class="app-identity" id="appIdentity">
+      <div class="app-identity-inner">
+        <img id="appIcon" src="" alt="" class="app-identity-icon hidden" />
+        <div>
+          <p class="app-identity-label">Recharging</p>
+          <h2 class="app-identity-name" id="appName">Loading…</h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form card -->
+    <div class="form-card">
+
+      <!-- Step indicators -->
+      <div class="steps">
+        <div class="step active" data-step="1">
+          <span class="step-num">1</span>
+          <span class="step-label">Details</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" data-step="2">
+          <span class="step-num">2</span>
+          <span class="step-label">Confirm</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" data-step="3">
+          <span class="step-num">3</span>
+          <span class="step-label">Pay</span>
+        </div>
+      </div>
+
+      <!-- STEP 1: Input form -->
+      <div id="step1" class="step-panel">
+        <div class="field-group">
+          <label class="field-label" for="appUserId">App User ID</label>
+          <input
+            type="text"
+            id="appUserId"
+            class="field-input"
+            placeholder="Your in-app user ID"
+            autocomplete="off"
+            required
+          />
+          <p class="field-hint">The unique ID assigned to you in the app.</p>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="phoneNumber">M-Pesa Number</label>
+          <div class="phone-input-wrap">
+            <span class="phone-prefix">+254</span>
+            <input
+              type="tel"
+              id="phoneNumber"
+              class="field-input phone-field"
+              placeholder="7XX XXX XXX"
+              pattern="[0-9]{9}"
+              maxlength="9"
+              inputmode="numeric"
+              required
+            />
+          </div>
+          <p class="field-hint">The STK push will be sent to this number.</p>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="coinQty">Coins to Purchase</label>
+          <input
+            type="number"
+            id="coinQty"
+            class="field-input"
+            placeholder="e.g. 1000"
+            min="1"
+            inputmode="numeric"
+            required
+          />
+        </div>
+
+        <!-- Live KES preview -->
+        <div class="kes-preview" id="kesPreview">
+          <span class="kes-preview-label">Amount Payable</span>
+          <span class="kes-preview-amount">
+            <span class="kes-currency">KES</span>
+            <span id="kesAmount">0</span>
+          </span>
+        </div>
+
+        <button class="btn-primary" id="btnNext" type="button" disabled>
+          Continue to Confirm
+          <span class="btn-arrow">→</span>
+        </button>
+      </div>
+
+      <!-- STEP 2: Confirmation summary -->
+      <div id="step2" class="step-panel hidden">
+        <div class="confirm-card">
+          <h3 class="confirm-title">Order Summary</h3>
+          <dl class="confirm-list">
+            <div class="confirm-row">
+              <dt>App</dt>
+              <dd id="confApp">—</dd>
+            </div>
+            <div class="confirm-row">
+              <dt>User ID</dt>
+              <dd id="confUserId">—</dd>
+            </div>
+            <div class="confirm-row">
+              <dt>M-Pesa Number</dt>
+              <dd id="confPhone">—</dd>
+            </div>
+            <div class="confirm-row">
+              <dt>Coins</dt>
+              <dd id="confCoins">—</dd>
+            </div>
+            <div class="confirm-row confirm-row--total">
+              <dt>Total</dt>
+              <dd id="confTotal">—</dd>
+            </div>
+          </dl>
+        </div>
+
+        <p class="confirm-notice">
+          ✔ Your phone will receive an M-Pesa prompt. Enter your PIN to complete payment.
+        </p>
+
+        <div class="btn-row">
+          <button class="btn-ghost" id="btnBack" type="button">← Back</button>
+          <button class="btn-primary" id="btnPay" type="button">
+            Pay via M-Pesa
+            <span class="btn-arrow">→</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Processing / result -->
+      <div id="step3" class="step-panel hidden">
+
+        <!-- Processing state -->
+        <div id="stateProcessing" class="result-state">
+          <div class="result-icon result-icon--spin">◈</div>
+          <h3>Processing Payment…</h3>
+          <p>Check your phone for the M-Pesa prompt and enter your PIN.</p>
+          <div class="poll-bar">
+            <div class="poll-bar-fill" id="pollBarFill"></div>
+          </div>
+          <p class="poll-hint" id="pollHint">Waiting for confirmation…</p>
+        </div>
+
+        <!-- Success state -->
+        <div id="stateSuccess" class="result-state hidden">
+          <div class="result-icon result-icon--success">✓</div>
+          <h3>Payment Received!</h3>
+          <p id="successMsg">Your coins are queued for loading.</p>
+          <dl class="confirm-list" style="margin-top:1.5rem">
+            <div class="confirm-row">
+              <dt>Reference</dt>
+              <dd id="successRef">—</dd>
+            </div>
+            <div class="confirm-row">
+              <dt>M-Pesa Receipt</dt>
+              <dd id="successReceipt">—</dd>
+            </div>
+          </dl>
+          <a href="index.html" class="btn-primary" style="margin-top:2rem;display:inline-flex">
+            Recharge Another App
+          </a>
+        </div>
+
+        <!-- Failed state -->
+        <div id="stateFailed" class="result-state hidden">
+          <div class="result-icon result-icon--fail">✕</div>
+          <h3>Payment Failed</h3>
+          <p>The transaction could not be completed. Please try again.</p>
+          <button class="btn-primary" id="btnRetry" type="button" style="margin-top:2rem">
+            Try Again
+          </button>
+        </div>
+
+      </div>
+
+    </div><!-- /.form-card -->
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2025 CoinHub · Secured payments via Safaricom M-Pesa</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/recharge.js"></script>
+</body>
+</html>

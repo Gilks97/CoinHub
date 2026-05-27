@@ -1,0 +1,50 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<!-- ── CoinHub Dashboard Stats Cards ─────────────────────────────────────── -->
+{% if coinhub_stats %}
+<div style="
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+">
+
+  {% with s=coinhub_stats %}
+
+  <div style="background:#1e2430;border:1px solid #2d3748;border-radius:10px;padding:1.25rem 1.5rem">
+    <p style="font-size:0.7rem;color:#718096;text-transform:uppercase;letter-spacing:.08em;margin:0 0 .4rem">Orders Today</p>
+    <p style="font-size:2rem;font-weight:700;color:#e2e8f0;margin:0;line-height:1">{{ s.orders_today }}</p>
+  </div>
+
+  <div style="background:#1e2430;border:1px solid #2d3748;border-radius:10px;padding:1.25rem 1.5rem">
+    <p style="font-size:0.7rem;color:#718096;text-transform:uppercase;letter-spacing:.08em;margin:0 0 .4rem">Paid Today</p>
+    <p style="font-size:2rem;font-weight:700;color:#48bb78;margin:0;line-height:1">{{ s.paid_today }}</p>
+  </div>
+
+  <div style="background:#1e2430;border:1px solid #2d3748;border-radius:10px;padding:1.25rem 1.5rem">
+    <p style="font-size:0.7rem;color:#718096;text-transform:uppercase;letter-spacing:.08em;margin:0 0 .4rem">Pending Today</p>
+    <p style="font-size:2rem;font-weight:700;color:#ed8936;margin:0;line-height:1">{{ s.pending_today }}</p>
+  </div>
+
+  <div style="background:#1e2430;border:1px solid #2d3748;border-radius:10px;padding:1.25rem 1.5rem">
+    <p style="font-size:0.7rem;color:#718096;text-transform:uppercase;letter-spacing:.08em;margin:0 0 .4rem">Revenue Today</p>
+    <p style="font-size:1.6rem;font-weight:700;color:#c9a84c;margin:0;line-height:1">KES {{ s.revenue_today|floatformat:0 }}</p>
+  </div>
+
+  <div style="background:#1e2430;border:1px solid #2d3748;border-radius:10px;padding:1.25rem 1.5rem">
+    <p style="font-size:0.7rem;color:#718096;text-transform:uppercase;letter-spacing:.08em;margin:0 0 .4rem">Revenue This Month</p>
+    <p style="font-size:1.6rem;font-weight:700;color:#c9a84c;margin:0;line-height:1">KES {{ s.revenue_month|floatformat:0 }}</p>
+  </div>
+
+  {% endwith %}
+
+</div>
+{% endif %}
+
+<!-- ── Standard Django admin app list ────────────────────────────────────── -->
+{{ block.super }}
+
+{% endblock %}
