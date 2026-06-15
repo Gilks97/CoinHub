@@ -7,6 +7,8 @@ echo "========================================"
 
 # Ensure volume-mounted dirs are writable by appuser
 mkdir -p /app/staticfiles /app/media
+chmod -R 755 /app/staticfiles /app/media
+
 
 echo "--> Waiting for PostgreSQL to be ready..."
 until python - <<'PYEOF'

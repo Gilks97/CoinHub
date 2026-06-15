@@ -93,7 +93,7 @@ USE_TZ = True
 # ── Static / Media ────────────────────────────────────────────────────────────
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [] 
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -123,9 +123,15 @@ REST_FRAMEWORK = {
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = config(
-    "CORS_ALLOWED_ORIGINS", default="http://localhost:8080"
+    "CORS_ALLOWED_ORIGINS", default="http://localhost:8080,http://127.0.0.1:8080"
 ).split(",")
 CORS_ALLOW_CREDENTIALS = True
+
+# ── CSRF TRUSTED ORIGINS ──────────────────────
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
+]
 
 # ── Daraja (M-Pesa) ───────────────────────────────────────────────────────────
 DARAJA = {

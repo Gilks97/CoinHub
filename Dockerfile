@@ -7,8 +7,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# ── App user (non-root) ────────────────────────────────────────────────────────
-RUN useradd --create-home appuser
 WORKDIR /app
 
 # ── Python dependencies ────────────────────────────────────────────────────────
@@ -23,12 +21,8 @@ COPY backend/ .
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Give appuser access to the code base files
-RUN mkdir -p /app/staticfiles /app/media \
- && chown -R appuser:appuser /app/staticfiles /app/media
-RUN chown -R appuser:appuser /app
-
-USER appuser
+# Create target folders for storage bindings
+RUN mkdir -p /app/staticfiles /app/media
 
 EXPOSE 8000
 
