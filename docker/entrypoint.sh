@@ -39,7 +39,7 @@ echo "--> Collecting static files..."
 python manage.py collectstatic --noinput --clear
 
 echo "--> Ensuring default superuser exists..."
-python manage.py create_default_superuser
+python manage.py createsuperuser --noinput || true
 
 echo "--> Starting Gunicorn..."
 exec gunicorn config.wsgi:application \
