@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
 from apps.core.utils import generate_reference
 from apps.payments.models import Payment
 from apps.payments.daraja import initiate_stk_push
@@ -12,13 +15,14 @@ from .serializers import RechargeRequestSerializer, OrderStatusSerializer
 
 logger = logging.getLogger(__name__)
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class RechargeCreateView(APIView):
     """
     POST /api/recharges/
     Creates Order + Payment + triggers STK Push
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         logger.info("=" * 80)
@@ -137,36 +141,36 @@ class RechargeCreateView(APIView):
         logger.info("Initiating STK Push | reference=%s", reference)
 
         try:
-            stk_result = initiate_stk_push(
+            stk_result_wrapper = initiate_stk_push(
                 phone=phone_number,
                 amount=int(amount_kes),
                 reference=reference,
                 description=f"CoinHub {coin_type.name} recharge",
             )
+            
+            req_payload = stk_result_wrapper.get("request_payload")
+            res_payload = stk_result_wrapper.get("response_payload")
 
-            logger.info(
-                "STK push completed | reference=%s | response=%s",
-                reference,
-                stk_result,
-            )
-
-            payment.checkout_request_id = stk_result.get("CheckoutRequestID", "")
-            payment.merchant_request_id = stk_result.get("MerchantRequestID", "")
-            payment.save(update_fields=["checkout_request_id", "merchant_request_id"])
-
-            logger.info(
-                "Payment updated with STK IDs | checkout_request_id=%s | merchant_request_id=%s",
-                payment.checkout_request_id,
-                payment.merchant_request_id,
-            )
+            payment.request_payload = req_payload
+            payment.response_payload = res_payload
+            
+            # Extract identifiers from the immediate push response
+            payment.checkout_request_id = res_payload.get("CheckoutRequestID", "")
+            payment.merchant_request_id = res_payload.get("MerchantRequestID", "")
+            
+            # Save the result code sent on initial handshake (0 means prompt went out successfully)
+            if "ResponseCode" in res_payload:
+                payment.result_code = int(res_payload.get("ResponseCode"))
+                payment.result_description = res_payload.get("ResponseDescription")
+                
+            payment.save(update_fields=[
+                "checkout_request_id", "merchant_request_id", 
+                "request_payload", "response_payload",
+                "result_code", "result_description"
+            ])
 
         except Exception:
-            logger.exception(
-                "STK PUSH FAILED | reference=%s | order_id=%s | payment_id=%s",
-                reference,
-                getattr(order, "id", None),
-                getattr(payment, "id", None),
-            )
+            logger.exception("STK PUSH INITIALIZATION TRACKING FAILED")
 
         # ─────────────────────────────────────────────
         # 6. Final response

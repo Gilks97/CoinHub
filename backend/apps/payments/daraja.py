@@ -104,50 +104,23 @@ def initiate_stk_push(
     description: str,
 ) -> dict:
     """
-    Initiate STK Push.
+    Initiate STK Push and return request/response payloads for audit.
     """
-    logger.info("=" * 80)
-    logger.info("STK PUSH INITIALIZATION STARTED")
-    logger.info("Reference      : %s", reference)
-    logger.info("Phone          : %s", phone)
-    logger.info("Amount         : %s", amount)
-    logger.info("Description    : %s", description)
-    logger.info("=" * 80)
-
-    try:
-        token = _get_access_token()
-    except Exception:
-        logger.exception(
-            "STK initialization aborted. OAuth token acquisition failed."
-        )
-        raise
-
+    token = _get_access_token()
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     password = _generate_password(timestamp)
 
     shortcode = settings.DARAJA["SHORTCODE"]
     callback_url = settings.DARAJA["CALLBACK_URL"]
 
-    logger.info(
-        "STEP 3/4 - Building STK payload | shortcode=%s (Paybill Mode)",
-        shortcode,
-    )
-    logger.info(
-        "Configured callback URL: %s",
-        callback_url,
-    )
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # 🛠️ PAYBILL REFRACTOR COMPLETED HERE
-    # ─────────────────────────────────────────────────────────────────────────
     payload = {
         "BusinessShortCode": shortcode,
         "Password": password,
         "Timestamp": timestamp,
-        "TransactionType": "CustomerPayBillOnline",  # Switched to Paybill
+        "TransactionType": "CustomerPayBillOnline",
         "Amount": amount,
         "PartyA": phone,
-        "PartyB": shortcode,                         # For Paybill, PartyB matches the shortcode
+        "PartyB": shortcode,
         "PhoneNumber": phone,
         "CallBackURL": callback_url,
         "AccountReference": reference,
@@ -161,74 +134,29 @@ def initiate_stk_push(
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
-
     url = f"{_base_url()}/mpesa/stkpush/v1/processrequest"
 
-    logger.info("STEP 4/4 - Sending STK request")
-    logger.info("Daraja URL: %s", url)
-    logger.info("Payload: %s", log_payload)
-
     try:
-        response = requests.post(
-            url,
-            json=payload,
-            headers=headers,
-            timeout=30,
-        )
-
-        logger.info(
-            "Daraja responded | HTTP=%s",
-            response.status_code,
-        )
-
-        logger.info(
-            "Daraja raw response body: %s",
-            response.text,
-        )
-
+        response = requests.post(url, json=payload, headers=headers, timeout=20)
+        
         if not response.ok:
-            logger.error(
-                "Daraja returned error response | HTTP=%s | BODY=%s",
-                response.status_code,
-                response.text,
-            )
-
+            logger.error("Daraja non-2xx response | HTTP %s | Body: %s", response.status_code, response.text)
+            
         response.raise_for_status()
         data = response.json()
 
-        logger.info(
-            "Raw Daraja Response: %s",
-            data,
-        )
-
-        response_code = data.get("ResponseCode")
-
-        if response_code == "0":
-            logger.info("STK PUSH ACCEPTED")
-            logger.info("MerchantRequestID=%s", data.get("MerchantRequestID"))
-            logger.info("CheckoutRequestID=%s", data.get("CheckoutRequestID"))
-            logger.info("Customer should receive M-Pesa prompt shortly.")
-        else:
-            logger.warning("Daraja returned non-success response.")
-            logger.warning("ResponseCode=%s", response_code)
-            logger.warning("ResponseDescription=%s", data.get("ResponseDescription"))
-
-        return data
-
+        return {
+            "request_payload": log_payload,
+            "response_payload": data
+        }
     except requests.HTTPError as exc:
-        logger.error(
-            "STK request failed | HTTP=%s | BODY=%s",
-            exc.response.status_code if exc.response else "N/A",
-            exc.response.text if exc.response else "NO RESPONSE",
-            exc_info=True,
-        )
-        raise
+        return {
+            "request_payload": log_payload,
+            "response_payload": {"error": exc.response.text if exc.response else "HTTP Error"}
+        }
     except Exception:
-        logger.exception("Unexpected exception while sending STK request")
+        logger.exception("Unexpected exception during STK push initialization for Ref: %s", reference)
         raise
-    finally:
-        logger.info(
-            "STK PUSH PROCESS COMPLETED FOR REFERENCE=%s",
-            reference,
-        )
-        logger.info("=" * 80)
+
+
+    
