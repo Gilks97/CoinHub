@@ -7,7 +7,7 @@ const CONFIG = {
   // In production, point directly to your Render backend service URL.
   API_BASE: window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
     ? '/api' 
-    : 'https://coinhub-backend.onrender.com/api', // <-- Replace with your actual Render URL later
+    : 'https://coinhub-uzzu.onrender.com/api', // <-- Replace with your actual Render URL later
     
   POLL_INTERVAL_MS: 3000,
   POLL_MAX_ATTEMPTS: 20,  
