@@ -60,13 +60,19 @@
         <div class="field-group">
           <label class="field-label" for="appUserId">App User ID</label>
           <input
-            type="text"
+            type="tel" 
             id="appUserId"
             class="field-input"
-            placeholder="Your in-app user ID"
+            placeholder="Up to 8-digit User ID"
+            pattern="[0-9]{1,8}"
+            maxlength="8"
+            inputmode="numeric"
             autocomplete="off"
             required
           />
+          <p id="userIdError" style="color: #ff4d4d; font-size: 0.85rem; margin-top: 0.25rem; display: none;">
+            ⚠️ Only digits are permitted.
+          </p>
           <p class="field-hint">The unique ID assigned to you in the app.</p>
         </div>
 
@@ -207,7 +213,7 @@
   </main>
 
   <footer class="site-footer">
-    <p>© 2025 CoinHub · Secured payments via Safaricom M-Pesa</p>
+    <p>© 2026 CoinHub · Secured payments via Safaricom M-Pesa</p>
   </footer>
 
   <script src="js/config.js"></script>

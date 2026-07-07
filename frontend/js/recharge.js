@@ -17,6 +17,7 @@ let pollCount   = 0;
 const appIcon       = document.getElementById('appIcon');
 const appName       = document.getElementById('appName');
 const appUserId     = document.getElementById('appUserId');
+const userIdError   = document.getElementById('userIdError');
 const phoneNumber   = document.getElementById('phoneNumber');
 const coinQty       = document.getElementById('coinQty');
 const kesAmount     = document.getElementById('kesAmount');
@@ -66,7 +67,7 @@ function formatKes(n) {
 }
 
 function validateStep1() {
-  const hasId    = appUserId.value.trim().length > 0;
+  const hasId    = /^\d{1,8}$/.test(appUserId.value.trim());
   const hasPhone = /^\d{9}$/.test(phoneNumber.value.trim());
   const hasCoins = parseInt(coinQty.value) > 0;
   btnNext.disabled = !(hasId && hasPhone && hasCoins);
@@ -116,7 +117,30 @@ function onCoinInput() {
 }
 
 coinQty.addEventListener('input', onCoinInput);
-appUserId.addEventListener('input', validateStep1);
+
+let errorTimeout = null;
+
+appUserId.addEventListener('input', (e) => {
+  // Check if they typed anything that isn't a digit
+  if (/[^0-9]/.test(e.target.value)) {
+    // Show the warning message
+    userIdError.style.display = 'block';
+    
+    // Clear any existing timer so it doesn't vanish early
+    if (errorTimeout) clearTimeout(errorTimeout);
+    
+    // Hide the message automatically after 1.5 seconds
+    errorTimeout = setTimeout(() => {
+      userIdError.style.display = 'none';
+    }, 1500);
+  }
+
+  // Strip out the non-numeric characters instantly
+  e.target.value = e.target.value.replace(/[^0-9]/g, '');
+  validateStep1();
+});
+
+
 phoneNumber.addEventListener('input', validateStep1);
 
 // ── Step 1 → Step 2 ──────────────────────────────────────────────────────────

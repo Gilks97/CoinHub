@@ -1,3 +1,4 @@
+import re
 from rest_framework import serializers
 from apps.catalog.models import CoinType
 from .models import Order
@@ -17,6 +18,17 @@ class RechargeRequestSerializer(serializers.Serializer):
         except CoinType.DoesNotExist:
             raise serializers.ValidationError("Coin type not found or inactive.")
         return coin_type
+
+    def validate_app_user_id(self, value):
+        """Validates that the App User ID is between 1 and 8 digits, containing only numbers."""
+        clean_value = str(value).strip()
+
+        # Matches between 1 and 8 digits only
+        if not re.match(r'^\d{1,8}$', clean_value):
+            raise serializers.ValidationError(
+                "App User ID must be between 1 and 8 digits long and contain only numbers."
+            )
+        return clean_value
 
     def validate_phone_number(self, value):
         from apps.core.utils import normalize_phone
