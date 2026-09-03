@@ -5,45 +5,36 @@ echo "========================================"
 echo "  CoinHub — Container Startup"
 echo "========================================"
 
-# Ensure volume-mounted dirs are writable by appuser
 mkdir -p /app/staticfiles /app/media
 chmod -R 755 /app/staticfiles /app/media
 
+echo "--> Waiting for PostgreSQL..."
 
-echo "--> Waiting for PostgreSQL to be ready..."
-until python - <<'PYEOF'
-import sys, os
-try:
-    import psycopg2
-    psycopg2.connect(
-        dbname=os.environ["DB_NAME"],
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-        host=os.environ.get("DB_HOST", "db"),
-        port=os.environ.get("DB_PORT", "5432"),
-    ).close()
-except Exception:
-    sys.exit(1)
-PYEOF
-do
-  echo "    PostgreSQL unavailable - retrying in 2s..."
-  sleep 2
+MAX_RETRIES=5
+COUNT=0
+
+until python check_db.py; do
+  COUNT=$((COUNT + 1))
+  if [ $COUNT -ge $MAX_RETRIES ]; then
+    echo "========================================"
+    echo "--> CRITICAL ERROR: Database failed to connect after $MAX_RETRIES attempts."
+    echo "========================================"
+    exit 1
+  fi
+  echo "--> Connection failed. Retrying in 3 seconds ($COUNT/$MAX_RETRIES)..."
+  sleep 3
 done
-echo "--> PostgreSQL is ready."
 
-echo "--> Running database migrations..."
+echo "--> Database connection established. Proceeding with migrations..."
+
 python manage.py makemigrations --noinput
 python manage.py migrate --noinput
-
-echo "--> Collecting static files..."
 python manage.py collectstatic --noinput --clear
-
-echo "--> Ensuring default superuser exists..."
 python manage.py createsuperuser --noinput || true
 
 echo "--> Starting Gunicorn..."
 exec gunicorn config.wsgi:application \
-  --bind 0.0.0.0:8000 \
+  --bind 0.0.0.0:${PORT:-8000} \
   --workers 3 \
   --worker-class sync \
   --timeout 120 \
@@ -51,3 +42,5 @@ exec gunicorn config.wsgi:application \
   --access-logfile - \
   --error-logfile - \
   --log-level info
+
+  
