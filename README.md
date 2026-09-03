@@ -93,6 +93,7 @@ CoinHub/
 │   └── icons/              # App icons (hala.png, boloup.png …)
 │
 ├── backend/
+    ├── check_db.py         #CoinHub Database Diagnostic & Startup Check : Verifies connection to Neon PostgreSQL via DATABASE_URL
 │   ├── manage.py
 │   ├── config/
 │   │   ├── settings.py     # All Django settings
