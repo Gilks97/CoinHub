@@ -10,6 +10,7 @@ from apps.accounts.models import Role
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    # Rearranged columns: Status -> Action -> Processed By -> Completed At
     list_display = (
         "reference",
         "coin_type",
@@ -18,13 +19,14 @@ class OrderAdmin(admin.ModelAdmin):
         "coins_requested",
         "amount_paid_display",
         "status_badge",
-        "dispatch_action",
-        "loaded_by",
-        "loaded_at",
+        "dispatch_action",  # The automated row button column
+        "loaded_by",        # Shows who clicked it automatically
+        "loaded_at",        # Shows exactly when it was clicked automatically
     )
     list_filter = ("status", "coin_type", "created_at")
     search_fields = ("reference", "app_user_id", "phone_number")
     ordering = ["-created_at"]
+    
     actions = ["mark_as_loaded_action"]
 
     fieldsets = (
@@ -42,91 +44,30 @@ class OrderAdmin(admin.ModelAdmin):
         }),
     )
 
-    # ── Safe Inline CSS Injection for Mobile Cards ────────────────────────────
-
-    def media(self):
-        """
-        Safely injects CSS media queries into Django Admin head tag
-        without triggering 500 template context errors.
-        """
-        media = super().media
-        custom_css = """
-        <style>
-            @media (max-width: 768px) {
-                #result_list thead { display: none !important; }
-                #result_list, #result_list tbody, #result_list tr, #result_list td {
-                    display: block !important;
-                    width: 100% !important;
-                    box-sizing: border-box !important;
-                }
-                #result_list tr {
-                    background: #ffffff !important;
-                    margin-bottom: 16px !important;
-                    border-radius: 12px !important;
-                    border: 1px solid #e2e8f0 !important;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
-                    padding: 14px !important;
-                    position: relative !important;
-                }
-                #result_list tr:nth-child(even) { background: #ffffff !important; }
-                #result_list td {
-                    border: none !important;
-                    padding: 6px 0 !important;
-                    text-align: left !important;
-                    font-size: 13px !important;
-                }
-                #result_list td.field-reference {
-                    font-size: 16px !important;
-                    font-weight: 700 !important;
-                    color: #1e293b !important;
-                    border-bottom: 1px solid #f1f5f9 !important;
-                    padding-bottom: 8px !important;
-                    margin-bottom: 8px !important;
-                }
-                #result_list td.field-dispatch_action {
-                    margin-top: 10px !important;
-                    padding-top: 10px !important;
-                    border-top: 1px dashed #e2e8f0 !important;
-                }
-                #result_list td.field-dispatch_action a.button {
-                    display: block !important;
-                    width: 100% !important;
-                    padding: 12px 0 !important;
-                    font-size: 14px !important;
-                    text-align: center !important;
-                    border-radius: 8px !important;
-                    box-shadow: 0 2px 4px rgba(39, 174, 96, 0.2) !important;
-                }
-                #result_list td.action-checkbox {
-                    position: absolute !important;
-                    top: 12px !important;
-                    right: 12px !important;
-                    width: auto !important;
-                }
-            }
-        </style>
-        """
-        return media + format_html(custom_css)
-
-    # ── Automated Inline Row Button ──────────────────────────────────────────
+    # ── Automated Inline Row Button (Restored to original working logic) ──────
 
     def dispatch_action(self, obj):
+        """
+        Renders a clickable button. When clicked, it automatically captures
+        the logged-in user, the current timestamp, and flips the status.
+        """
         if obj.status == ORDER_PAID:
             return format_html(
                 '<a class="button" href="{}/mark-loaded/" '
-                'style="background-color: #27ae60; color: white; padding: 6px 16px; '
-                'border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; '
+                'style="background-color: #27ae60; color: white; padding: 4px 12px; '
+                'border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 11px; '
                 'display: inline-block; text-align: center;">'
-                '🚀 Ship Coins</a>',
+                'Ship Coins</a>',
                 obj.id
             )
         elif obj.status == ORDER_LOADED:
             return format_html(
-                '<div style="color: #27ae60; font-size: 12px; font-weight: 700; background: #e8f8f0; '
-                'padding: 6px 12px; border-radius: 6px; text-align: center;">'
-                '✓ Dispatched</div>'
+                '<span style="color: #2980b9; font-size: 11px; font-weight: bold;">'
+                '✓ Dispatched</span>'
             )
-        return format_html('<span style="color: #95a5a6; font-size: 12px;">—</span>')
+        
+        # Explicitly return safe inline HTML for ALL other statuses (pending, failed, etc.)
+        return format_html('<span style="color: #95a5a6; font-size: 11px;">—</span>')
         
     dispatch_action.short_description = "Action"
 
@@ -144,13 +85,17 @@ class OrderAdmin(admin.ModelAdmin):
         return custom_urls + urls
 
     def process_individual_load(self, request, order_id):
+        """
+        Fires automatically when 'Ship Coins' is clicked. Captures who 
+        is logged in, logs the time, changes the status, and returns instantly.
+        """
         try:
             order = Order.objects.get(pk=order_id)
             if order.status == ORDER_PAID:
                 order.status = ORDER_LOADED
-                order.loaded_at = timezone.now()
-                order.loaded_by = request.user
-                order.loading_notes = f"Dispatched via mobile card action by user: {request.user.username}."
+                order.loaded_at = timezone.now()  # Automatically picks up server time
+                order.loaded_by = request.user    # Automatically picks up active Agent/Admin account
+                order.loading_notes = f"Dispatched instantly via row action button by user: {request.user.username}."
                 order.save()
                 self.message_user(request, f"Order {order.reference} successfully dispatched.", level='success')
             else:
@@ -195,7 +140,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     def amount_paid_display(self, obj):
         return f"KES {obj.amount_paid:,.0f}"
-    amount_paid_display.short_description = "Amount"
+    amount_paid_display.short_description = "Amount (KES)"
 
     def status_badge(self, obj):
         colors = {
@@ -206,8 +151,8 @@ class OrderAdmin(admin.ModelAdmin):
         }
         color = colors.get(obj.status, "#95a5a6")
         return format_html(
-            '<span style="background:{};color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:bold;display:inline-block;">{}</span>',
+            '<span style="background:{};color:#fff;padding:2px 8px;border-radius:3px;font-size:11px">{}</span>',
             color,
-            obj.get_status_display().upper(),
+            obj.get_status_display(),
         )
     status_badge.short_description = "Status"
