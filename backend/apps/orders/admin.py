@@ -42,91 +42,71 @@ class OrderAdmin(admin.ModelAdmin):
         }),
     )
 
-    # ── Mobile Responsive CSS Injector ────────────────────────────────────────
+    # ── Safe Inline CSS Injection for Mobile Cards ────────────────────────────
 
-    class Media:
-        css = {
-            "all": ("admin/css/mobile_orders_cards.css",)
-        }
-
-    def changelist_view(self, request, extra_context=None):
+    def media(self):
         """
-        Injects mobile-first CSS directly into the changelist head without 
-        requiring static file collection rebuilds during rapid iteration.
+        Safely injects CSS media queries into Django Admin head tag
+        without triggering 500 template context errors.
         """
-        extra_context = extra_context or {}
-        extra_context["mobile_card_styles"] = format_html("""
-            <style>
-                @media (max-width: 768px) {
-                    /* Hide standard table headers */
-                    #result_list thead { display: none !important; }
-                    
-                    /* Convert Table into vertical Card Stack */
-                    #result_list, #result_list tbody, #result_list tr, #result_list td {
-                        display: block !important;
-                        width: 100% !important;
-                        box-sizing: border-box !important;
-                    }
-
-                    /* Style individual Order Rows as Mobile Cards */
-                    #result_list tr {
-                        background: #ffffff !important;
-                        margin-bottom: 16px !important;
-                        border-radius: 12px !important;
-                        border: 1px solid #e2e8f0 !important;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
-                        padding: 14px !important;
-                        position: relative !important;
-                    }
-
-                    #result_list tr:nth-child(even) { background: #ffffff !important; }
-
-                    /* Target each table cell */
-                    #result_list td {
-                        border: none !important;
-                        padding: 6px 0 !important;
-                        text-align: left !important;
-                        font-size: 13px !important;
-                    }
-
-                    /* Header Info: Reference + Status Badge on same line */
-                    #result_list td.field-reference {
-                        font-size: 16px !important;
-                        font-weight: 700 !important;
-                        color: #1e293b !important;
-                        border-bottom: 1px solid #f1f5f9 !important;
-                        padding-bottom: 8px !important;
-                        margin-bottom: 8px !important;
-                    }
-
-                    /* Full-width thumb-friendly Ship Coins button */
-                    #result_list td.field-dispatch_action {
-                        margin-top: 10px !important;
-                        padding-top: 10px !important;
-                        border-top: 1px dashed #e2e8f0 !important;
-                    }
-
-                    #result_list td.field-dispatch_action a.button {
-                        display: block !important;
-                        width: 100% !important;
-                        padding: 12px 0 !important;
-                        font-size: 14px !important;
-                        text-align: center !important;
-                        border-radius: 8px !important;
-                        box-shadow: 0 2px 4px rgba(39, 174, 96, 0.2) !important;
-                    }
-
-                    /* Select Checkbox adjustment */
-                    #result_list td.action-checkbox {
-                        position: absolute !important;
-                        top: 12px !important;
-                        right: 12px !important;
-                        width: auto !important;
-                    }
+        media = super().media
+        custom_css = """
+        <style>
+            @media (max-width: 768px) {
+                #result_list thead { display: none !important; }
+                #result_list, #result_list tbody, #result_list tr, #result_list td {
+                    display: block !important;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
                 }
-            </style>
-        """)
-        return super().changelist_view(request, extra_context=extra_context)
+                #result_list tr {
+                    background: #ffffff !important;
+                    margin-bottom: 16px !important;
+                    border-radius: 12px !important;
+                    border: 1px solid #e2e8f0 !important;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+                    padding: 14px !important;
+                    position: relative !important;
+                }
+                #result_list tr:nth-child(even) { background: #ffffff !important; }
+                #result_list td {
+                    border: none !important;
+                    padding: 6px 0 !important;
+                    text-align: left !important;
+                    font-size: 13px !important;
+                }
+                #result_list td.field-reference {
+                    font-size: 16px !important;
+                    font-weight: 700 !important;
+                    color: #1e293b !important;
+                    border-bottom: 1px solid #f1f5f9 !important;
+                    padding-bottom: 8px !important;
+                    margin-bottom: 8px !important;
+                }
+                #result_list td.field-dispatch_action {
+                    margin-top: 10px !important;
+                    padding-top: 10px !important;
+                    border-top: 1px dashed #e2e8f0 !important;
+                }
+                #result_list td.field-dispatch_action a.button {
+                    display: block !important;
+                    width: 100% !important;
+                    padding: 12px 0 !important;
+                    font-size: 14px !important;
+                    text-align: center !important;
+                    border-radius: 8px !important;
+                    box-shadow: 0 2px 4px rgba(39, 174, 96, 0.2) !important;
+                }
+                #result_list td.action-checkbox {
+                    position: absolute !important;
+                    top: 12px !important;
+                    right: 12px !important;
+                    width: auto !important;
+                }
+            }
+        </style>
+        """
+        return media + format_html(custom_css)
 
     # ── Automated Inline Row Button ──────────────────────────────────────────
 
@@ -136,7 +116,7 @@ class OrderAdmin(admin.ModelAdmin):
                 '<a class="button" href="{}/mark-loaded/" '
                 'style="background-color: #27ae60; color: white; padding: 6px 16px; '
                 'border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; '
-                'display: inline-block; text-align: center; transition: all 0.2s;">'
+                'display: inline-block; text-align: center;">'
                 '🚀 Ship Coins</a>',
                 obj.id
             )
