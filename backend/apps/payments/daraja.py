@@ -112,6 +112,7 @@ def initiate_stk_push(
 
     shortcode = settings.DARAJA["SHORTCODE"]
     callback_url = settings.DARAJA["CALLBACK_URL"]
+    till_number = settings.DARAJA["TILL_NUMBER"]
 
     payload = {
         "BusinessShortCode": shortcode,
@@ -120,7 +121,7 @@ def initiate_stk_push(
         "TransactionType": "CustomerBuyGoodsOnline",
         "Amount": amount,
         "PartyA": phone,
-        "PartyB": shortcode,
+        "PartyB": till_number,
         "PhoneNumber": phone,
         "CallBackURL": callback_url,
         "AccountReference": reference,
