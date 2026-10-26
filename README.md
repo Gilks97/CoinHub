@@ -436,4 +436,4 @@ docker compose up -d --build
 
 ## License
 
- © 2025 CoinHub
+ © 2026 CoinHub
