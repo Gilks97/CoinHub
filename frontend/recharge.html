@@ -63,9 +63,9 @@
             type="tel" 
             id="appUserId"
             class="field-input"
-            placeholder="Up to 8-digit User ID"
-            pattern="[0-9]{1,8}"
-            maxlength="8"
+            placeholder="Up to 10-digit User ID"
+            pattern="[0-9]{1,10}"
+            maxlength="10"
             inputmode="numeric"
             autocomplete="off"
             required
@@ -84,9 +84,9 @@
               type="tel"
               id="phoneNumber"
               class="field-input phone-field"
-              placeholder="7XX XXX XXX"
-              pattern="[0-9]{9}"
-              maxlength="9"
+              placeholder="7XX or 07XX"
+              pattern="(0|254)?[17][0-9]{8}"
+              maxlength="15"
               inputmode="numeric"
               required
             />

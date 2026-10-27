@@ -20,13 +20,12 @@ class RechargeRequestSerializer(serializers.Serializer):
         return coin_type
 
     def validate_app_user_id(self, value):
-        """Validates that the App User ID is between 1 and 8 digits, containing only numbers."""
+        """Validates that the App User ID is between 1 and 10 digits, numbers only."""
         clean_value = str(value).strip()
 
-        # Matches between 1 and 8 digits only
-        if not re.match(r'^\d{1,8}$', clean_value):
+        if not re.match(r'^\d{1,10}$', clean_value):
             raise serializers.ValidationError(
-                "App User ID must be between 1 and 8 digits long and contain only numbers."
+                "App User ID must be between 1 and 10 digits long and contain only numbers."
             )
         return clean_value
 

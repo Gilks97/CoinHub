@@ -66,9 +66,23 @@ function formatKes(n) {
   return n.toLocaleString('en-KE');
 }
 
+// Turns what the user typed (7XX…, 07XX…, 2547XX…, +2547XX…) into the
+// 9-digit national number, e.g. "712345678".
+function getLocalPhone() {
+  let d = phoneNumber.value.replace(/\D/g, '');   // keep digits only
+  if (d.startsWith('254')) d = d.slice(3);        // drop country code if pasted
+  if (d.startsWith('0'))   d = d.slice(1);        // drop leading 0 (07XX…)
+  return d.slice(0, 9);
+}
+
+// Full number sent to the API, same format as before: 254 + 9 digits
+function getFullPhone() {
+  return '254' + getLocalPhone();
+}
+
 function validateStep1() {
-  const hasId    = /^\d{1,8}$/.test(appUserId.value.trim());
-  const hasPhone = /^\d{9}$/.test(phoneNumber.value.trim());
+  const hasId    = /^\d{1,10}$/.test(appUserId.value.trim());
+  const hasPhone = /^[17]\d{8}$/.test(getLocalPhone());
   const hasCoins = parseInt(coinQty.value) > 0;
   btnNext.disabled = !(hasId && hasPhone && hasCoins);
 }
@@ -141,13 +155,22 @@ appUserId.addEventListener('input', (e) => {
 });
 
 
-phoneNumber.addEventListener('input', validateStep1);
+// CHANGED: sanitize the phone field while typing.
+// Digits only; the length cap depends on how the user started the number:
+//   7XXXXXXXX (9) | 07XXXXXXXX (10) | 2547XXXXXXXX (12)
+phoneNumber.addEventListener('input', (e) => {
+  const digits = e.target.value.replace(/\D/g, '');
+  const maxLen = digits.startsWith('254') ? 12 : digits.startsWith('0') ? 10 : 9;
+  e.target.value = digits.slice(0, maxLen);
+  validateStep1();
+});
+
 
 // ── Step 1 → Step 2 ──────────────────────────────────────────────────────────
 btnNext.addEventListener('click', () => {
   const coins = parseInt(coinQty.value);
   const kes   = calcKes(coins);
-  const phone = '254' + phoneNumber.value.trim();
+  const phone = getFullPhone();
 
   document.getElementById('confApp').textContent     = currentCoin.name;
   document.getElementById('confUserId').textContent  = appUserId.value.trim();
@@ -172,7 +195,7 @@ btnPay.addEventListener('click', async () => {
   showResultState('processing');
 
   const coins = parseInt(coinQty.value);
-  const phone = '254' + phoneNumber.value.trim();
+  const phone = getFullPhone();
 
   try {
     const result = await API.createRecharge({

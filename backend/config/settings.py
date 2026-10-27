@@ -71,7 +71,7 @@ DATABASES = {
     'default': dj_database_url.config(
         default=config('DATABASE_URL', default=''),
         conn_max_age=600,
-        ssl_require=True
+        ssl_require=not DEBUG  # Enforces SSL in Production, disables it for local dev (DEBUG=True)
     )
 }
 
@@ -188,8 +188,8 @@ JAZZMIN_SETTINGS = {
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
     "related_modal_active": False,
-    "custom_css": None,
-    "custom_js": None,
+    "custom_css": "coinhub_admin.css",
+    "custom_js": "coinhub_admin.js",
     "use_google_fonts_cdn": True,
     "show_ui_builder": False,
     "changeform_format": "horizontal_tabs",
