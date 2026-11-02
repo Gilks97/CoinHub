@@ -10,5 +10,7 @@ const CONFIG = {
     : 'https://coinhub-uzzu.onrender.com/api', // <-- Replace with your actual Render URL later
     
   POLL_INTERVAL_MS: 3000,
-  POLL_MAX_ATTEMPTS: 20,  
+  POLL_MAX_ATTEMPTS: 20,
+  COIN_MIN: 1000,   // minimum coins per purchase
+  COIN_STEP: 1000,  // coins must be a multiple of this  
 };

@@ -101,10 +101,15 @@
             id="coinQty"
             class="field-input"
             placeholder="e.g. 1000"
-            min="1"
+            min="1000"
+            step="1000"
             inputmode="numeric"
             required
           />
+          <p class="field-hint">Coins must be in multiples of 1,000 (e.g. 1,000, 2,000, 3,000…).</p>
+          <p class="field-hint" id="coinHint" style="margin-top: 0.25rem; font-size: 0.85rem; color: #e53e3e; display: none;">
+            ⚠️ Coins must be in multiples of 1,000 (e.g. 1,000, 2,000, 3,000…).
+          </p>
         </div>
 
         <!-- Live KES preview -->

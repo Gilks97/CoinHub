@@ -1,3 +1,4 @@
+from django.conf import settings
 import re
 from rest_framework import serializers
 from apps.catalog.models import CoinType
@@ -10,7 +11,8 @@ class RechargeRequestSerializer(serializers.Serializer):
     coin_type_slug = serializers.SlugField()
     app_user_id = serializers.CharField(max_length=100)
     phone_number = serializers.CharField(max_length=20)
-    coins_requested = serializers.IntegerField(min_value=1)
+    coins_requested = serializers.IntegerField(min_value=settings.COIN_MIN_PURCHASE)
+
 
     def validate_coin_type_slug(self, value):
         try:
@@ -37,6 +39,14 @@ class RechargeRequestSerializer(serializers.Serializer):
         if len(phone) != 12:
             raise serializers.ValidationError("Phone number must be 12 digits including country code.")
         return phone
+
+    def validate_coins_requested(self, value):
+        step = settings.COIN_PURCHASE_STEP
+        if value % step != 0:
+            raise serializers.ValidationError(
+                f"Coins must be bought in multiples of {step:,} (1,000, 2,000, 3,000…)."
+            )
+        return value
 
 
 class OrderStatusSerializer(serializers.ModelSerializer):

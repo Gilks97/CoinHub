@@ -83,7 +83,8 @@ function getFullPhone() {
 function validateStep1() {
   const hasId    = /^\d{1,10}$/.test(appUserId.value.trim());
   const hasPhone = /^[17]\d{8}$/.test(getLocalPhone());
-  const hasCoins = parseInt(coinQty.value) > 0;
+  const qty      = parseInt(coinQty.value) || 0;
+  const hasCoins = qty >= CONFIG.COIN_MIN && qty % CONFIG.COIN_STEP === 0;
   btnNext.disabled = !(hasId && hasPhone && hasCoins);
 }
 
@@ -127,6 +128,12 @@ function onCoinInput() {
   const coins = parseInt(coinQty.value) || 0;
   const kes   = calcKes(coins);
   kesAmount.textContent = formatKes(kes);
+
+  // show/hide the red warning (instead of changing colour)
+  const coinHint = document.getElementById('coinHint');
+  const invalid  = coins > 0 && (coins < CONFIG.COIN_MIN || coins % CONFIG.COIN_STEP !== 0);
+  coinHint.style.display = invalid ? 'block' : 'none';
+
   validateStep1();
 }
 

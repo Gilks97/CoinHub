@@ -233,3 +233,8 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+
+# coin purchase rules (enforced in the API, not just the browser)
+COIN_MIN_PURCHASE  = 1000
+COIN_PURCHASE_STEP = 1000
