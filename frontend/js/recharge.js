@@ -145,7 +145,8 @@ function validateStep1() {
   const hasId    = /^\d{1,10}$/.test(appUserId.value.trim());
   const hasPhone = /^[17]\d{8}$/.test(getLocalPhone());
   const qty      = parseInt(coinQty.value) || 0;
-  const hasCoins = qty >= coinMin() && qty % coinStep() === 0;  
+  const hasCoins = qty >= coinMin() && qty % coinStep() === 0; 
+  btnNext.disabled = !(hasId && hasPhone && hasCoins); 
 }
 
 // ── Init: load coin from API ──────────────────────────────────────────────────
@@ -181,6 +182,7 @@ async function init() {
     coinQty.placeholder = `e.g. ${coinMin().toLocaleString('en-KE')}`;
     document.getElementById('coinRule').textContent = ruleText();
     buildChips();
+    validateStep1();
 
   } catch (err) {
     appName.textContent = 'Could not load app data';
@@ -384,3 +386,7 @@ function showResultState(state) {
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  validateStep1();   // disabled until all inputs are filled
+  init();
+});
