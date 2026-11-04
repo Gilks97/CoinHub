@@ -2,12 +2,16 @@
 CoinHub catalog — CoinType model.
 """
 from decimal import Decimal, ROUND_CEILING
+from fractions import Fraction
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from apps.core.models import TimestampedModel
 
 
+#Largest pack (in coins) we accept. Stops prices like 15.3333 that would need a huge pack.
+MAX_PACK_COINS = 1_000_000
 class CoinType(TimestampedModel):
     """
     Represents one of the supported coin/game products.
@@ -46,7 +50,7 @@ class CoinType(TimestampedModel):
     def __str__(self):
         return self.name
 
-    # NEW: keep conversion_rate in sync with price_per_1000 on every save.
+    # keep conversion_rate in sync with price_per_1000 on every save.
     # Rounded UP (ROUND_CEILING) so an exact price such as 5,000 BoloUp = 77 KES
     # never turns into 78 because of a tiny rounding difference.
     def save(self, *args, **kwargs):
@@ -55,7 +59,41 @@ class CoinType(TimestampedModel):
         )
         super().save(*args, **kwargs)
 
+        # ---- Whole-shilling packs (no rounding) --------------------------------
+    @property
+    def pack_coins(self) -> int:
+        """
+        Smallest number of coins whose price is a WHOLE number of shillings.
+        Example: 15.4 per 1,000 = 77/5, so every 5 blocks (5,000 coins) costs 77 KES.
+        """
+        return Fraction(str(self.price_per_1000)).denominator * 1000
+
+    @property
+    def pack_price_kes(self) -> int:
+        """Price (whole KES) of one pack."""
+        return int(Fraction(str(self.price_per_1000)) * self.pack_coins / 1000)
+
+    @property
+    def min_coins(self) -> int:
+        """Minimum purchase = one pack."""
+        return self.pack_coins
+
+    @property
+    def step_coins(self) -> int:
+        """Purchases grow in whole packs."""
+        return self.pack_coins
+
+    def clean(self):
+        super().clean()
+        if self.price_per_1000 and self.pack_coins > MAX_PACK_COINS:
+            raise ValidationError({
+                "price_per_1000": (
+                    f"With this price the smallest whole-shilling pack would be {self.pack_coins:,} coins "
+                    f"(limit {MAX_PACK_COINS:,}). Use a price with fewer decimals, e.g. 15.4 or 1.6."
+                )
+            })
+
     def calculate_kes(self, coins: int) -> int:
-        """Return the KES amount (rounded up) for the given coin quantity."""
-        import math
-        return math.ceil(coins / float(self.conversion_rate))
+        """KES for the given coins. Exact for valid packs; rounds up only if given an odd amount."""
+        amount = self.price_per_1000 * Decimal(coins) / Decimal(1000)
+        return int(amount.to_integral_value(rounding=ROUND_CEILING))

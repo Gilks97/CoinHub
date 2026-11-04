@@ -59,11 +59,72 @@ function setActiveStep(n) {
 
 function calcKes(coins) {
   if (!currentCoin || !coins || coins <= 0) return 0;
-  return Math.ceil(coins / parseFloat(currentCoin.conversion_rate));
+  // price is converted to ten-thousandths of a shilling (an integer) first.
+  if (currentCoin.price_per_1000) {
+    const units = Math.round(parseFloat(currentCoin.price_per_1000) * 10000);
+    return Math.ceil((units * coins) / 10000000);
+  }
+  return Math.ceil(coins / parseFloat(currentCoin.conversion_rate));   // fallback for old API data
 }
 
 function formatKes(n) {
   return n.toLocaleString('en-KE');
+}
+
+// Each coin is sold in packs whose price is a whole number of shillings.
+// The pack size comes from the API (min_coins = step_coins); config.js is only a fallback.
+function coinMin()  { return (currentCoin && currentCoin.min_coins)  || CONFIG.COIN_MIN; }
+function coinStep() { return (currentCoin && currentCoin.step_coins) || CONFIG.COIN_STEP; }
+function packPriceKes() {
+  return (currentCoin && currentCoin.pack_price_kes) || calcKes(coinStep());
+}
+
+// NEW: smallest valid amount that is >= n
+function snapUp(n) {
+  const step = coinStep();
+  return Math.max(coinMin(), Math.ceil(n / step) * step);
+}
+
+// NEW: rule text under the field
+function ruleText() {
+  return `Sold in packs of ${coinStep().toLocaleString('en-KE')} coins ` +
+         `(KES ${formatKes(packPriceKes())} per pack). Minimum: 1 pack.`;
+}
+
+// NEW: quick-pick buttons (1, 2, 3, 5, 10 packs; fewer for very large packs)
+function buildChips() {
+  const box = document.getElementById('coinChips');
+  const pack = coinStep();
+  const multiples = pack >= 100000 ? [1, 2, 3] : [1, 2, 3, 5, 10];
+  const chips = multiples.map((m) => {
+    const coins = pack * m;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'coin-chip';
+    btn.dataset.coins = coins;
+    const top = document.createElement('span');
+    top.textContent = coins.toLocaleString('en-KE');
+    const sub = document.createElement('small');
+    sub.textContent = `KES ${formatKes(calcKes(coins))}`;
+    btn.append(top, sub);
+    btn.addEventListener('click', () => { coinQty.value = coins; onCoinInput(); });
+    return btn;
+  });
+  box.replaceChildren(...chips);
+}
+
+// soft note (not a warning), hides itself after a few seconds
+let noteTimer = null;
+function showNote(text) {
+  const note = document.getElementById('coinHint');
+  note.textContent = text;
+  note.style.display = 'block';
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(() => { note.style.display = 'none'; }, 5000);
+}
+function hideNote() {
+  clearTimeout(noteTimer);
+  document.getElementById('coinHint').style.display = 'none';
 }
 
 // Turns what the user typed (7XX…, 07XX…, 2547XX…, +2547XX…) into the
@@ -84,8 +145,7 @@ function validateStep1() {
   const hasId    = /^\d{1,10}$/.test(appUserId.value.trim());
   const hasPhone = /^[17]\d{8}$/.test(getLocalPhone());
   const qty      = parseInt(coinQty.value) || 0;
-  const hasCoins = qty >= CONFIG.COIN_MIN && qty % CONFIG.COIN_STEP === 0;
-  btnNext.disabled = !(hasId && hasPhone && hasCoins);
+  const hasCoins = qty >= coinMin() && qty % coinStep() === 0;  
 }
 
 // ── Init: load coin from API ──────────────────────────────────────────────────
@@ -116,6 +176,11 @@ async function init() {
     appIcon.onerror = () => appIcon.classList.add('hidden');
 
     document.title = `CoinHub — ${currentCoin.name} Recharge`;
+    coinQty.min = coinMin();
+    coinQty.step = coinStep();
+    coinQty.placeholder = `e.g. ${coinMin().toLocaleString('en-KE')}`;
+    document.getElementById('coinRule').textContent = ruleText();
+    buildChips();
 
   } catch (err) {
     appName.textContent = 'Could not load app data';
@@ -126,18 +191,33 @@ async function init() {
 // ── Live KES calculation ───────────────────────────────────────────────────────
 function onCoinInput() {
   const coins = parseInt(coinQty.value) || 0;
-  const kes   = calcKes(coins);
-  kesAmount.textContent = formatKes(kes);
+  const valid = coins >= coinMin() && coins % coinStep() === 0;
 
-  // show/hide the red warning (instead of changing colour)
-  const coinHint = document.getElementById('coinHint');
-  const invalid  = coins > 0 && (coins < CONFIG.COIN_MIN || coins % CONFIG.COIN_STEP !== 0);
-  coinHint.style.display = invalid ? 'block' : 'none';
+  // CHANGED: the price preview only shows for valid amounts ('-' while the number is not a whole pack)
+  kesAmount.textContent = valid ? formatKes(calcKes(coins)) : (coins > 0 ? '-' : '0');
 
+  // NEW: highlight the matching quick-pick button
+  document.querySelectorAll('.coin-chip').forEach((b) =>
+    b.classList.toggle('active', Number(b.dataset.coins) === coins));
+
+  hideNote();    
   validateStep1();
 }
 
 coinQty.addEventListener('input', onCoinInput);
+
+// NEW: when the user leaves the field (or presses Enter), round an invalid amount UP to the
+// next whole pack and tell them softly, instead of showing an error.
+coinQty.addEventListener('change', () => {
+  const coins = parseInt(coinQty.value) || 0;
+  if (coins <= 0) return;
+  if (coins >= coinMin() && coins % coinStep() === 0) return;
+  const fixed = snapUp(coins);
+  coinQty.value = fixed;
+  onCoinInput();
+  const who = currentCoin ? currentCoin.name : 'This app';
+  showNote(`Adjusted to ${fixed.toLocaleString('en-KE')} coins. ${who} is sold in packs of ${coinStep().toLocaleString('en-KE')}.`);
+});
 
 let errorTimeout = null;
 

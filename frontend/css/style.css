@@ -681,3 +681,38 @@ body::before {
 @media (max-width: 380px) {
   .app-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* -- Coin quick-pick buttons (recharge page) ------------------------------- */
+.coin-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.coin-chip {
+  flex: 1 1 calc(33% - 0.5rem);
+  min-width: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.5rem 0.4rem;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.coin-chip small { font-size: 0.7rem; font-weight: 400; color: var(--text-muted); }
+.coin-chip:hover { border-color: var(--gold); }
+.coin-chip.active { border-color: var(--gold); background: var(--gold-dim); }
+.coin-chip.active small { color: var(--gold-light); }
+
+/* soft "adjusted" note shown under the coins field */
+.field-note { margin-top: 0.5rem; font-size: 0.82rem; color: var(--gold-light); }
